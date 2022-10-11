@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Debug",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}",
+      "buildFlags": "-buildmode=exe",
+      "env":{
+        "Path":"${env:Path};${workspaceFolder}\\assets;${workspaceFolder}\\assets\\x64",
+        "CGO_ENABLED": "0",
+        "GOARCH": "amd64",
+        "GOOS": "windows"
+      }
+    }
+  ]
+}
