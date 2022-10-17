@@ -12,6 +12,7 @@ const (
 	ItemCount             = 256
 	MoveCount             = 251
 	PokemonCount          = 251
+	PokemonNameCount      = 256
 	UnownNo               = 200
 	TrainerImageCount     = 66
 	UnownCount            = 26

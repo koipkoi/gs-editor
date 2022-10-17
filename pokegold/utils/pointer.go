@@ -41,7 +41,7 @@ func ConvertToAddressBy3BytePointer(pointer3bytes []byte) int {
 	return (int(pointer3bytes[0]) * 0x4000) | (pointerAddress - 0x4000)
 }
 
-func FixBank(bank byte) byte {
+func DecodeBank(bank byte) byte {
 	switch bank {
 	case 0x13:
 		return 0x1f
@@ -53,12 +53,37 @@ func FixBank(bank byte) byte {
 	return bank
 }
 
+func EncodeBank(bank byte) byte {
+	switch bank {
+	case 0x1f:
+		return 0x13
+	case 0x20:
+		return 0x14
+	case 0x2e:
+		return 0x1f
+	}
+	return bank
+}
+
 func SliceBytes(s []byte, start, length int) []byte {
 	return s[start : start+length]
 }
 
-func CopyBytes(bytes *[]byte, start int, src []byte) {
+func CopyBytes(bytes []byte, start int, src []byte) {
 	for i := 0; i < len(src); i++ {
-		(*bytes)[start+i] = src[i]
+		bytes[start+i] = src[i]
+	}
+}
+
+func CopyBytesWithLength(bytes []byte, start int, src []byte, length int) int {
+	for i := 0; i < length; i++ {
+		bytes[start+i] = src[i]
+	}
+	return start + length
+}
+
+func FillBytes(bytes []byte, v byte, start int, length int) {
+	for i := 0; i < length; i++ {
+		bytes[start+i] = v
 	}
 }

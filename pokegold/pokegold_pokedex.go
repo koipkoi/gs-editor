@@ -45,5 +45,46 @@ func (*PokedexConverter) Read(pokegold *Pokegold) {
 }
 
 func (*PokedexConverter) Write(pokegold *Pokegold) {
-	// todo 추가
+	textEncodeBuffer := make([]byte, 1024)
+	firstAddress := 0x1a0000
+	secondAddress := 0x1a4000
+
+	utils.FillBytes(pokegold.rawBytes, 0, 0x1a0000, 0x8000)
+
+	var length, address, pointerAddress int
+	for i := 0; i < PokemonCount; i++ {
+		if i < 128 {
+			address = firstAddress
+			pointerAddress = 0x442ff + (i * 2)
+		} else {
+			address = secondAddress
+			pointerAddress = 0x443ff + ((i - 128) * 2)
+		}
+
+		utils.CopyBytes(pokegold.rawBytes, pointerAddress, utils.ConvertToPointer(address))
+
+		length = utils.TextEncodeBuffered(textEncodeBuffer, pokegold.Pokedex[i].SpecificName)
+		address = utils.CopyBytesWithLength(pokegold.rawBytes, address, textEncodeBuffer, length)
+		pokegold.rawBytes[address] = 0x50
+		address++
+
+		pokegold.rawBytes[address] = pokegold.Pokedex[i].Height
+		address++
+
+		pokegold.rawBytes[address] = byte(pokegold.Pokedex[i].Weight & 0x00ff)
+		address++
+		pokegold.rawBytes[address] = byte((pokegold.Pokedex[i].Weight & 0xff00) >> 8)
+		address++
+
+		length = utils.TextEncodeBuffered(textEncodeBuffer, pokegold.Pokedex[i].Description)
+		address = utils.CopyBytesWithLength(pokegold.rawBytes, address, textEncodeBuffer, length)
+		pokegold.rawBytes[address] = 0x50
+		address++
+
+		if i < 128 {
+			firstAddress = address
+		} else {
+			secondAddress = address
+		}
+	}
 }

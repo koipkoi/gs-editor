@@ -46,5 +46,17 @@ func (*ColorsConverter) Read(pokegold *Pokegold) {
 }
 
 func (*ColorsConverter) Write(pokegold *Pokegold) {
-	// todo 추가
+	for i := 0; i < PokemonCount; i++ {
+		address := 0xad15 + (i * 8)
+
+		pokegold.rawBytes[address] = pokegold.Colors.PokemonColors[i][0].ToBytes()[0]
+		pokegold.rawBytes[address+1] = pokegold.Colors.PokemonColors[i][0].ToBytes()[1]
+		pokegold.rawBytes[address+2] = pokegold.Colors.PokemonColors[i][1].ToBytes()[0]
+		pokegold.rawBytes[address+3] = pokegold.Colors.PokemonColors[i][1].ToBytes()[1]
+
+		pokegold.rawBytes[address+4] = pokegold.Colors.PokemonShinyColors[i][0].ToBytes()[0]
+		pokegold.rawBytes[address+5] = pokegold.Colors.PokemonShinyColors[i][0].ToBytes()[1]
+		pokegold.rawBytes[address+6] = pokegold.Colors.PokemonShinyColors[i][1].ToBytes()[0]
+		pokegold.rawBytes[address+7] = pokegold.Colors.PokemonShinyColors[i][1].ToBytes()[1]
+	}
 }

@@ -17,5 +17,11 @@ func (*ItemsConverter) Read(pokegold *Pokegold) {
 }
 
 func (*ItemsConverter) Write(pokegold *Pokegold) {
-	// todo 추가
+	for i := 0; i < ItemCount; i++ {
+		address := 0x697b + (i * 7)
+		bytes := pokegold.Items[i].ToBytes()
+		for j := 0; j < len(bytes); j++ {
+			pokegold.rawBytes[address+j] = bytes[j]
+		}
+	}
 }

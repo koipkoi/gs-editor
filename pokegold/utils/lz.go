@@ -5,10 +5,6 @@ import (
 	"unsafe"
 )
 
-const (
-	outputBufferSize = 0x4000
-)
-
 var (
 	lunarRecompress *syscall.LazyProc
 
@@ -39,12 +35,13 @@ func init() {
 
 // 바이트 배열 압축
 func LZCompress(bytes []byte) []byte {
-	var output [outputBufferSize]byte
+	length := len(bytes)
+	output := make([]byte, length)
 	compressedLength, _, _ := lunarRecompress.Call(
 		uintptr(unsafe.Pointer(&bytes[0])),
 		uintptr(unsafe.Pointer(&output[0])),
-		uintptr(len(bytes)),
-		outputBufferSize,
+		uintptr(length),
+		uintptr(length),
 		2,
 		0,
 	)

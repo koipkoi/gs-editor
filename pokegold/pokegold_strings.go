@@ -52,7 +52,7 @@ func (*StringsConverter) Read(pokegold *Pokegold) {
 	// pokemon_name
 	{
 		pokegold.Strings.PokemonNames = nil
-		for i := 0; i < PokemonCount; i++ {
+		for i := 0; i < PokemonNameCount; i++ {
 			var buffer []byte
 			address := utils.ConvertToAddressBy3BytePointer(utils.SliceBytes(pokegold.rawBytes, 0x35c3, 3)) + (i * 10)
 			for j := 0; j < 10; j++ {
@@ -134,6 +134,59 @@ func (*StringsConverter) Read(pokegold *Pokegold) {
 }
 
 func (*StringsConverter) Write(pokegold *Pokegold) {
-	// todo 추가
-}
+	utils.FillBytes(pokegold.rawBytes, 0, 0x1b0000, 0x4000)
 
+	textEncodeBuffer := make([]byte, 1024)
+	nameWriteAddress := 0x1b0000
+
+	{
+		utils.CopyBytes(pokegold.rawBytes, 0x35cc, utils.ConvertToPointerWithBank(nameWriteAddress))
+		utils.CopyBytes(pokegold.rawBytes, 0x515cd, utils.ConvertToPointer(nameWriteAddress))
+		utils.CopyBytes(pokegold.rawBytes, 0x515d7, utils.ConvertToPointer(nameWriteAddress))
+
+		for i := 0; i < ItemCount; i++ {
+			length := utils.TextEncodeBuffered(textEncodeBuffer, pokegold.Strings.ItemNames[i])
+			nameWriteAddress = utils.CopyBytesWithLength(pokegold.rawBytes, nameWriteAddress, textEncodeBuffer, length)
+			pokegold.rawBytes[nameWriteAddress] = 0x50
+			nameWriteAddress++
+		}
+	}
+
+	{
+		utils.CopyBytes(pokegold.rawBytes, 0x35d5, utils.ConvertToPointerWithBank(nameWriteAddress))
+
+		for i := 0; i < TrainerClassNameCount; i++ {
+			length := utils.TextEncodeBuffered(textEncodeBuffer, pokegold.Strings.TrainerClassNames[i])
+			nameWriteAddress = utils.CopyBytesWithLength(pokegold.rawBytes, nameWriteAddress, textEncodeBuffer, length)
+			pokegold.rawBytes[nameWriteAddress] = 0x50
+			nameWriteAddress++
+		}
+	}
+
+	{
+		utils.CopyBytes(pokegold.rawBytes, 0x35c3, utils.ConvertToPointerWithBank(nameWriteAddress))
+		utils.CopyBytes(pokegold.rawBytes, 0x3667, utils.ConvertToPointer(nameWriteAddress))
+		utils.CopyBytes(pokegold.rawBytes, 0x515bf, utils.ConvertToPointer(nameWriteAddress))
+
+		for i := 0; i < PokemonNameCount; i++ {
+			length := utils.TextEncodeBuffered(textEncodeBuffer, pokegold.Strings.PokemonNames[i])
+			nameWriteAddress = utils.CopyBytesWithLength(pokegold.rawBytes, nameWriteAddress, textEncodeBuffer, length)
+
+			for i := 0; i < 10-length; i++ {
+				pokegold.rawBytes[nameWriteAddress] = 0x50
+				nameWriteAddress++
+			}
+		}
+	}
+
+	{
+		utils.CopyBytes(pokegold.rawBytes, 0x35c6, utils.ConvertToPointerWithBank(nameWriteAddress))
+
+		for i := 0; i < MoveCount; i++ {
+			length := utils.TextEncodeBuffered(textEncodeBuffer, pokegold.Strings.MoveNames[i])
+			nameWriteAddress = utils.CopyBytesWithLength(pokegold.rawBytes, nameWriteAddress, textEncodeBuffer, length)
+			pokegold.rawBytes[nameWriteAddress] = 0x50
+			nameWriteAddress++
+		}
+	}
+}
