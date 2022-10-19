@@ -14,7 +14,7 @@ for /f "tokens=*" %%i in ('dir /a:d /b') do (
 
 @echo build *.syso...
 @cd %~dp0
-@%TOOLS_DIR%go-winres\go-winres.exe make --in %~dp0winres\winres.json
+@%TOOLS_DIR%go-winres\go-winres.exe make --in %~dp0res\winres\winres.json
 
 :close
 @pause
