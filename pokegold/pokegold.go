@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"os"
+	"sync"
 
 	models "gs-editor/pokegold/models"
 )
@@ -34,8 +35,9 @@ var (
 )
 
 type Pokegold struct {
-	isOpen bool `default:"false"`
+	IsOpen bool
 
+	Filename     string
 	rawBytes     []byte
 	originalHash string
 
@@ -47,6 +49,9 @@ type Pokegold struct {
 	Colors  Colors
 	Images  Images
 	Strings Strings
+
+	onChangedObserversMutex *sync.Mutex
+	onChangedObservers      []func(*Pokegold)
 }
 
 type PokegoldConverter interface {
@@ -54,8 +59,12 @@ type PokegoldConverter interface {
 	Write(pokegold *Pokegold)
 }
 
-func (pokegold *Pokegold) IsOpen() bool {
-	return pokegold.isOpen
+func NewPokegold() *Pokegold {
+	return &Pokegold{
+		IsOpen:                  false,
+		onChangedObserversMutex: &sync.Mutex{},
+		onChangedObservers:      nil,
+	}
 }
 
 func (pokegold *Pokegold) ReadRom(filename string) error {
@@ -72,7 +81,10 @@ func (pokegold *Pokegold) ReadRom(filename string) error {
 		converter.Read(pokegold)
 	}
 
-	pokegold.isOpen = true
+	pokegold.IsOpen = true
+	pokegold.Filename = filename
+	pokegold.NotifyOnChanged()
+
 	return nil
 }
 
@@ -81,8 +93,29 @@ func (pokegold *Pokegold) WriteRom(filename string) error {
 		converter.Write(pokegold)
 	}
 
+	err := os.WriteFile(filename, pokegold.rawBytes, 0644)
+	if err != nil {
+		return err
+	}
+
 	hash := md5.Sum(pokegold.rawBytes)
 	pokegold.originalHash = hex.EncodeToString(hash[:])
+	pokegold.Filename = filename
+	pokegold.NotifyOnChanged()
 
-	return os.WriteFile(filename, pokegold.rawBytes, 0644)
+	return nil
+}
+
+func (pokegold *Pokegold) AddOnChanged(obs func(*Pokegold)) {
+	pokegold.onChangedObserversMutex.Lock()
+	pokegold.onChangedObservers = append(pokegold.onChangedObservers, obs)
+	pokegold.onChangedObserversMutex.Unlock()
+}
+
+func (pokegold *Pokegold) NotifyOnChanged() {
+	pokegold.onChangedObserversMutex.Lock()
+	for _, obs := range pokegold.onChangedObservers {
+		obs(pokegold)
+	}
+	pokegold.onChangedObserversMutex.Unlock()
 }

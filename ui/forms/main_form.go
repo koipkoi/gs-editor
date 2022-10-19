@@ -1,6 +1,7 @@
 package forms
 
 import (
+	"gs-editor/pokegold"
 	"gs-editor/res"
 	"gs-editor/ui/helpers"
 
@@ -11,20 +12,27 @@ import (
 
 type TMainForm struct {
 	*vcl.TForm
-	res     res.Resources
-	menu    *vcl.TMainMenu
-	toolBar *vcl.TToolBar
+
+	res      *res.Resources
+	pokegold *pokegold.Pokegold
+	menu     *vcl.TMainMenu
+	toolBar  *vcl.TToolBar
 }
 
 func NewMainForm() *TMainForm {
 	f := new(TMainForm)
-
 	f.TForm = vcl.Application.CreateForm()
-	f.TForm.SetCaption("GS 에디터")
+	f.res = res.NewResources(f)
+	f.pokegold = pokegold.NewPokegold()
+
 	f.TForm.SetIcon(f.res.GetIcon("app_icon.ico"))
 	f.TForm.SetShowInTaskBar(types.StAlways)
 
-	f.res = *res.NewResources(f)
+	f.TForm.SetCaption("GS 에디터")
+	f.pokegold.AddOnChanged(func(p *pokegold.Pokegold) {
+		f.TForm.SetCaption("GS 에디터 - " + p.Filename)
+	})
+
 	f.TForm.SetOnCloseQuery(func(sender vcl.IObject, canClose *bool) {
 		f.res.Free()
 	})
@@ -53,9 +61,14 @@ func (f *TMainForm) buildMainMenu() {
 
 		menu.Add(helpers.NewMenuItem(f.menu, func(ti *vcl.TMenuItem) {
 			ti.SetCaption("저장(&S)")
+			ti.SetEnabled(false)
 			ti.SetImageIndex(f.res.GetImageListItem(f, "if_save.bmp", types.TColor(colors.RGB(255, 0, 255))))
 			ti.SetShortCutFromString("Ctrl+S")
 			ti.SetOnClick(f.onSaveClick)
+
+			f.pokegold.AddOnChanged(func(p *pokegold.Pokegold) {
+				ti.SetEnabled(p.IsOpen)
+			})
 		}))
 
 		menu.Add(helpers.NewMenuItem(f.menu, func(ti *vcl.TMenuItem) {
@@ -77,9 +90,14 @@ func (f *TMainForm) buildMainMenu() {
 
 		menu.Add(helpers.NewMenuItem(f.menu, func(ti *vcl.TMenuItem) {
 			ti.SetCaption("테스트 플레이(&P)...")
+			ti.SetEnabled(false)
 			ti.SetImageIndex(f.res.GetImageListItem(f, "if_play.bmp", types.TColor(colors.RGB(255, 0, 255))))
 			ti.SetShortCutFromString("F5")
 			ti.SetOnClick(f.onTestPlayClick)
+
+			f.pokegold.AddOnChanged(func(p *pokegold.Pokegold) {
+				ti.SetEnabled(p.IsOpen)
+			})
 		}))
 
 		menu.Add(helpers.NewMenuItem(f.menu, func(ti *vcl.TMenuItem) {
@@ -119,8 +137,13 @@ func (f *TMainForm) buildToolBar() {
 
 		helpers.NewToolBarButton(f.toolBar, func(tb *vcl.TToolButton) {
 			tb.SetCaption("저장")
+			tb.SetEnabled(false)
 			tb.SetOnClick(f.onSaveClick)
 			tb.SetImageIndex(f.res.GetImageListItem(f, "if_save.bmp", types.TColor(colors.RGB(255, 0, 255))))
+
+			f.pokegold.AddOnChanged(func(p *pokegold.Pokegold) {
+				tb.SetEnabled(p.IsOpen)
+			})
 		})
 	}
 
@@ -131,8 +154,13 @@ func (f *TMainForm) buildToolBar() {
 	{
 		helpers.NewToolBarButton(f.toolBar, func(tb *vcl.TToolButton) {
 			tb.SetCaption("테스트 플레이")
+			tb.SetEnabled(false)
 			tb.SetOnClick(f.onTestPlayClick)
 			tb.SetImageIndex(f.res.GetImageListItem(f, "if_play.bmp", types.TColor(colors.RGB(255, 0, 255))))
+
+			f.pokegold.AddOnChanged(func(p *pokegold.Pokegold) {
+				tb.SetEnabled(p.IsOpen)
+			})
 		})
 	}
 
@@ -150,11 +178,16 @@ func (f *TMainForm) buildToolBar() {
 }
 
 func (f *TMainForm) onOpenClick(vcl.IObject) {
-	// todo 추가
+	dialog := vcl.NewOpenDialog(f)
+	dialog.SetTitle("열기")
+	dialog.SetFilter("지원하는 파일|*.gb; *.gbc; *.bin|모든 파일|*.*")
+	if dialog.Execute() {
+		f.pokegold.ReadRom(dialog.FileName())
+	}
 }
 
 func (f *TMainForm) onSaveClick(vcl.IObject) {
-	// todo 추가
+	f.pokegold.WriteRom(f.pokegold.Filename)
 }
 
 func (f *TMainForm) onExitClick(vcl.IObject) {
