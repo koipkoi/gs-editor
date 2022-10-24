@@ -140,3 +140,26 @@ func (pokemon *Pokemon) ToBytes() []byte {
 
 	return bytes
 }
+
+func (pokemon *Pokemon) GetImageTileSize() int {
+	switch pokemon.ImageSizeType {
+	case 0x55:
+		return 5
+	case 0x66:
+		return 6
+	case 0x77:
+		return 7
+	}
+	return 7
+}
+
+func (pokemon *Pokemon) SetImageTileSize(size int) {
+	switch size {
+	case 5:
+		pokemon.ImageSizeType = 0x55
+	case 6:
+		pokemon.ImageSizeType = 0x66
+	case 7:
+		pokemon.ImageSizeType = 0x77
+	}
+}

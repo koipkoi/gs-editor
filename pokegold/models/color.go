@@ -25,6 +25,29 @@ func NewColorFromBytes(bytes []byte) Color {
 	}
 }
 
+func NewColorFromColor(color color.Color) Color {
+	r, g, b, _ := color.RGBA()
+	r = r / 8 << 0
+	g = g / 8 << 5
+	b = b / 8 << 10
+	colorInt := r | g | b
+	return Color{
+		highByte: byte((colorInt & 0xff00) >> 8),
+		lowByte:  byte((colorInt & 0x00ff) >> 0),
+	}
+}
+
+func NewColorFromVCLColor(color types.TColor) Color {
+	r := int(color.R()/8) << 0
+	g := int(color.G()/8) << 5
+	b := int(color.B()/8) << 10
+	colorInt := r | g | b
+	return Color{
+		highByte: byte((colorInt & 0xff00) >> 8),
+		lowByte:  byte((colorInt & 0x00ff) >> 0),
+	}
+}
+
 func (color *Color) ToBytes() []byte {
 	return []byte{
 		color.lowByte,

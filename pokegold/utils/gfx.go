@@ -125,6 +125,15 @@ func decodePNGPalette(reader io.Reader, paletteCount int) (color.Palette, bool) 
 
 // 이미지를 PNG 형식으로 인코딩하여 저장
 func WriteGBImage(filename string, gbImage GBImage) bool {
+	var palette color.Palette
+	for i := 0; i < 256; i++ {
+		if i < len(gbImage.Palette) {
+			palette = append(palette, gbImage.Palette[i])
+		} else {
+			palette = append(palette, color.RGBA{0, 0, 0, 0})
+		}
+	}
+
 	paletted := image.NewPaletted(image.Rectangle{
 		Min: image.Point{
 			X: 0,
@@ -134,7 +143,7 @@ func WriteGBImage(filename string, gbImage GBImage) bool {
 			X: gbImage.Columns * 8,
 			Y: gbImage.Rows * 8,
 		},
-	}, gbImage.Palette)
+	}, palette)
 
 	for i := 0; i < len(gbImage.Source); i += 2 {
 		first := gbImage.Source[i+0]
@@ -157,5 +166,7 @@ func WriteGBImage(filename string, gbImage GBImage) bool {
 	}
 
 	defer file.Close()
-	return png.Encode(file, paletted) == nil
+
+	encoder := png.Encoder{CompressionLevel: png.NoCompression}
+	return encoder.Encode(file, paletted) == nil
 }
